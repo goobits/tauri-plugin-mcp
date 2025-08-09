@@ -15,6 +15,7 @@ pub mod take_screenshot;
 pub mod text_input;
 pub mod webview;
 pub mod window_manager;
+pub mod console_capture;
 
 // Re-export command handler functions
 pub use execute_js::handle_execute_js;
@@ -26,6 +27,7 @@ pub use take_screenshot::handle_take_screenshot;
 pub use text_input::handle_simulate_text_input;
 pub use webview::{handle_get_dom, handle_get_element_position, handle_send_text_to_element};
 pub use window_manager::handle_manage_window;
+pub use console_capture::{handle_setup_console_capture, handle_get_js_result, handle_execute_with_console, handle_get_console_buffer};
 
 /// Handle command routing for socket requests
 pub async fn handle_command<R: Runtime>(
@@ -59,6 +61,11 @@ pub async fn handle_command<R: Runtime>(
                 error: Some(e.to_string()),
             }),
         },
+        // Event-based console capture commands
+        "setup_console_capture" => handle_setup_console_capture(app, payload).await,
+        "get_js_result" => handle_get_js_result(app, payload).await,
+        "execute_with_console" => handle_execute_with_console(app, payload).await,
+        "get_console_buffer" => handle_get_console_buffer(app, payload).await,
         commands::MANAGE_WINDOW => handle_manage_window(app, payload).await,
         commands::SIMULATE_TEXT_INPUT => handle_simulate_text_input(app, payload).await,
         commands::SIMULATE_MOUSE_MOVEMENT => handle_simulate_mouse_movement(app, payload).await,
