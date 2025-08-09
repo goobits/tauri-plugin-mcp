@@ -408,7 +408,7 @@ impl<R: Runtime> SocketServer<R> {
             p.to_string_lossy().to_string()
         } else {
             let temp_dir = std::env::temp_dir();
-            temp_dir.join("tauri-mcp.sock").to_string_lossy().to_string()
+            temp_dir.join(get_machine_specific_socket_name()).to_string_lossy().to_string()
         };
 
         if cfg!(target_os = "windows") {

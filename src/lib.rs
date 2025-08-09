@@ -120,7 +120,7 @@ pub fn init_with_config<R: Runtime>(config: PluginConfig) -> TauriPlugin<R> {
                     path.display()
                 );
             } else {
-                let default_path = std::env::temp_dir().join("tauri-mcp.sock");
+                let default_path = std::env::temp_dir().join(socket_server::get_machine_specific_socket_name());
                 info!(
                     "[TAURI_MCP] Socket server will use default IPC path: {}",
                     default_path.display()
