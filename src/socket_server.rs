@@ -12,10 +12,32 @@ use tauri::{AppHandle, Runtime};
 use log::{info, error};
 
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 use crate::error::Error;
 use crate::tools;
 use crate::SocketType;
+
+/// Get a machine-specific socket filename to avoid conflicts between host and containers
+pub fn get_machine_specific_socket_name() -> String {
+    let machine_id = get_machine_identifier();
+    format!("tauri-mcp-{}.sock", machine_id)
+}
+
+/// Get a unique identifier for this machine/container
+fn get_machine_identifier() -> String {
+    // Try machine-id first (most reliable)
+    if let Ok(id) = std::fs::read_to_string("/etc/machine-id") {
+        id.trim().chars().take(8).collect()
+    } else if let Ok(id) = std::fs::read_to_string("/proc/sys/kernel/random/boot_id") {
+        id.trim().chars().take(8).collect()  
+    } else {
+        // Fallback: use process ID as unique identifier
+        let pid = std::process::id();
+        format!("{:08x}", pid).chars().take(8).collect()
+    }
+}
 
 /// A wrapper stream that logs all reads and writes for debugging
 struct LoggingStream<S: Write + Read> {
@@ -127,7 +149,7 @@ impl<R: Runtime> SocketServer<R> {
                 } else {
                     let temp_dir = std::env::temp_dir();
                     temp_dir
-                        .join("tauri-mcp.sock")
+                        .join(get_machine_specific_socket_name())
                         .to_string_lossy()
                         .to_string()
                 };
@@ -353,7 +375,7 @@ impl<R: Runtime> SocketServer<R> {
                 let display_path = if let Some(p) = path {
                     p.to_string_lossy().to_string()
                 } else {
-                    std::env::temp_dir().join("tauri-mcp.sock").to_string_lossy().to_string()
+                    std::env::temp_dir().join(get_machine_specific_socket_name()).to_string_lossy().to_string()
                 };
                 info!(
                     "[TAURI_MCP] Socket server started successfully at {}",
